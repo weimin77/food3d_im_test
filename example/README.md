@@ -19,7 +19,7 @@ conan create . -pr:b=default -pr:h=default -s build_type=Release --build=missing
 ```
 
 `example/conanfile.py` 依赖 `food_volume_measure/0.1.0`，**profile 必须与编库时一致**
-（桌面 gcc-13 / RK3562 gcc-12 + armv8，均 Release）。
+（桌面 gcc-13 / RK3562 gcc-14 + armv8，均 Release）。
 
 ## 构建与运行（桌面 x86_64）
 
@@ -33,34 +33,37 @@ cmake -S . -B build/desktop \
   -DCMAKE_BUILD_TYPE=Release
 cmake --build build/desktop -j
 
-./build/desktop/example ../../py/test_data/d405_260322274982_20260805_142739.pcd \
-                        ../../py/test_data/d405_260322274982_20260819_180010.pcd
-./build/desktop/bench <baseline.pcd> <food.pcd> 5
+./build/desktop/example ../py/test_data/base.pcd ../py/test_data/food/3.pcd
+./build/desktop/bench   ../py/test_data/base.pcd ../py/test_data/food/3.pcd 5
 ```
 
-## 构建（交叉编译到 RK3562 / aarch64）
+> 测试点云在 `../py/test_data/`：`base.pcd` 为空炉基线，`food/1.pcd` … `food/11.pcd`
+> 为食材帧。真值见 `../py/test_data/ground_truth.json`。
+
+## 交叉编译与板端部署（RK3562 / aarch64）
+
+完整流程（工具链准备、profile 说明、依赖链规模、验证点、常见问题）见
+**[`cross-compile-rk3562.md`](cross-compile-rk3562.md)**。核心命令：
 
 ```bash
 cd example
 conan install . -pr:b=default -pr:h=../profiles/rk3562_aarch64 \
-  -of build/armv8 --build=missing \
-  -o 'pcl/*:with_libusb=False' -o 'pcl/*:with_pcap=False'
+  -of build/armv8 --build=missing -c tools.build:jobs=4
 
 cmake -S . -B build/armv8 \
   -DCMAKE_TOOLCHAIN_FILE=build/armv8/conan_toolchain.cmake \
   -DCMAKE_BUILD_TYPE=Release
-cmake --build build/armv8 -j
-```
+cmake --build build/armv8 -j4
 
-> 交叉编译必须关闭 PCL 的 libusb / pcap，否则会撞 libudev 报错。
-
-## 板端部署
-
-```bash
 scp build/armv8/example build/armv8/bench root@<板子IP>:/root/
-scp <baseline.pcd> <food.pcd> root@<板子IP>:/root/
-ssh root@<板子IP> '/root/bench /root/<baseline.pcd> /root/<food.pcd> 5'
+scp ../py/test_data/base.pcd root@<板子IP>:/root/
+scp ../py/test_data/food/3.pcd root@<板子IP>:/root/
+ssh root@<板子IP> '/root/bench /root/base.pcd /root/3.pcd 5'
 ```
+
+> 前置条件：`arm-toolchain/14.3.rel1` 必须先在本地 Conan 缓存中建好，
+> 且 PCL 的 `with_libusb` / `with_pcap` / `with_qt` / `with_opengl` 必须关闭
+> （已写在 `../profiles/rk3562_aarch64` 里）——细节见上述文档。
 
 ## 用法
 
@@ -87,10 +90,12 @@ bench   <baseline.pcd> <food.pcd> [runs] [config.json]
 
 ```
 example/
-├── CMakeLists.txt   # 两个可执行目标
-├── conanfile.py     # 声明 food_volume_measure 依赖
-├── main.cpp         # 功能演示
-└── bench.cpp        # 端到端性能基准
+├── CMakeLists.txt           # 两个可执行目标
+├── conanfile.py             # 声明 food_volume_measure 依赖
+├── main.cpp                 # 功能演示
+├── bench.cpp                # 端到端性能基准
+├── README.md                # 本文件
+└── cross-compile-rk3562.md  # RK3562 交叉编译与板端部署完整流程
 ```
 
 `build/` 及其下所有产物均为生成物，不入版本管理。
@@ -100,4 +105,4 @@ measurer.set_save_middle_cloud(true).set_middle_cloud_dir("middle_data/cpp");
 ```
 
 `run()` 成功后写出各阶段点云；**每个选中的连通块还会单独写出一个 PCD**，
-多食材场景可以逐个连通域排查：
+多食材场景可以逐个连通域排查。

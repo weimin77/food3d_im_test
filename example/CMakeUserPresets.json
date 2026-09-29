@@ -4,6 +4,7 @@
         "conan": {}
     },
     "include": [
-        "build/desktop/CMakePresets.json"
+        "build/desktop/CMakePresets.json",
+        "build/armv8/CMakePresets.json"
     ]
 }
