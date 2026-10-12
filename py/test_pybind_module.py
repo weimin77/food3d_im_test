@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""冒烟测试编译好的 ``food_volume_measure_python`` pybind 模块。
+"""冒烟测试编译好的 ``food3d_im_python`` pybind 模块。
 
 覆盖公开 API 的四条主线：端到端便捷函数、链式 ``FoodVolumeMeasurer``、
 逐连通块明细、日志 sink。

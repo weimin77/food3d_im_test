@@ -1,6 +1,6 @@
-# example — 通过 Conan 包消费 `food_volume_measure`
+# example — 通过 Conan 包消费 `food3d_im`
 
-把 `food_volume_measure` 当作**外部依赖**消费的最小工程，用来验证安装出来的包
+把 `food3d_im` 当作**外部依赖**消费的最小工程，用来验证安装出来的包
 （头文件 + 静态库）在**桌面 x86_64** 与 **RK3562（aarch64）** 两套目标上都能正常
 构建、链接和运行。
 
@@ -14,11 +14,11 @@
 ## 前置：把库装进本地 Conan 缓存
 
 ```bash
-# 在 food_volume_measure 仓库根目录
+# 在 food3d_im 仓库根目录
 conan create . -pr:b=default -pr:h=default -s build_type=Release --build=missing
 ```
 
-`example/conanfile.py` 依赖 `food_volume_measure/0.1.0`，**profile 必须与编库时一致**
+`example/conanfile.py` 依赖 `food3d_im/0.1.0`，**profile 必须与编库时一致**
 （桌面 gcc-13 / RK3562 gcc-14 + armv8，均 Release）。
 
 ## 构建与运行（桌面 x86_64）
@@ -72,9 +72,9 @@ example <baseline.pcd> <food.pcd> [config.json] [--dump-middle[=DIR]]
 bench   <baseline.pcd> <food.pcd> [runs] [config.json]
 ```
 
-- `config.json` 可选，对应 `MeasurementConfig`；示例见 `../config/measurement_config.example.json`
+- `config.json` 可选；`../config/measurement_config.example.json` 仍含已删除字段，使用前需按当前 `MeasurementConfig` 更新。省略时使用库默认值
 - `--dump-middle[=DIR]` 让库把各阶段中间点云写到 `DIR`（默认 `middle_data/cpp`），
-  便于用 Open3D / CloudCompare 逐阶段排查。这会顺序写出 6 个文件：
+  便于用 Open3D / CloudCompare 逐阶段排查。各阶段有点云时写出以下文件：
 
   | 文件 | 阶段 |
   |------|------|
@@ -84,14 +84,15 @@ bench   <baseline.pcd> <food.pcd> [runs] [config.json]
   | `3_baseline_surface.pcd` | 空炉基线表面（由基线栅格重建） |
   | `4_food_components.pcd` | 选中的食材连通块（合并） |
   | `4_food_component_label<NN>.pcd` | 每个连通块单独一个，`NN` 为连通块标签 |
-  | `5_top_surface.pcd` | 顶表面（体积积分所用） |
+  | `5_top_surface.pcd` | 补洞前的实测顶表面 |
+  | `6_hole_filled_surface.pcd` | 补洞后的顶表面 |
 
 ## 目录说明
 
 ```
 example/
 ├── CMakeLists.txt           # 两个可执行目标
-├── conanfile.py             # 声明 food_volume_measure 依赖
+├── conanfile.py             # 声明 food3d_im 依赖
 ├── main.cpp                 # 功能演示
 ├── bench.cpp                # 端到端性能基准
 ├── README.md                # 本文件
@@ -101,7 +102,7 @@ example/
 `build/` 及其下所有产物均为生成物，不入版本管理。
 
 ```cpp
-measurer.set_save_middle_cloud(true).set_middle_cloud_dir("middle_data/cpp");
+measurer.set_middle_cloud_dir("middle_data/cpp");
 ```
 
 `run()` 成功后写出各阶段点云；**每个选中的连通块还会单独写出一个 PCD**，

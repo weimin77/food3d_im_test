@@ -20,13 +20,13 @@
 ```mermaid
 graph LR
     A[arm-toolchain<br/>建工具链包] --> B[profile<br/>rk3562_aarch64]
-    B --> C[交叉编译库<br/>food_volume_measure]
+    B --> C[交叉编译库<br/>food3d_im]
     C --> D[交叉编译 example]
     D --> E[scp 上板]
     E --> F[板端运行验证]
 ```
 
-**依赖链的规模决定了耗时**：`food_volume_measure` 依赖 PCL，而 PCL 的完整依赖闭包有 17 个 Conan 包，全部需要为 aarch64 重新源码编译：
+**依赖链的规模决定了耗时**：`food3d_im` 依赖 PCL，而 PCL 的完整依赖闭包有 17 个 Conan 包，全部需要为 aarch64 重新源码编译：
 
 ```
 pcl/1.14.1
@@ -110,9 +110,9 @@ tools.build:jobs=4
 ## 第 3 步：交叉编译库
 
 ```bash
-cd /home/min/project/food_volume_measure
+cd /home/min/project/food3d_im
 
-conan create . -pr:b=default -pr:h=../food_volume_measure_test/profiles/rk3562_aarch64 \
+conan create . -pr:b=default -pr:h=../food3d_im_test/profiles/rk3562_aarch64 \
   -s build_type=Release --build=missing -c tools.build:jobs=4
 ```
 
@@ -120,12 +120,12 @@ conan create . -pr:b=default -pr:h=../food_volume_measure_test/profiles/rk3562_a
 只做编译链接验证，所以这一步不会卡住。
 
 > 若 `-pr:h` 相对路径不方便，可写成绝对路径
-> `-pr:h=/home/min/project/food_volume_measure_test/profiles/rk3562_aarch64`。
+> `-pr:h=/home/min/project/food3d_im_test/profiles/rk3562_aarch64`。
 
 ## 第 4 步：交叉编译 example
 
 ```bash
-cd /home/min/project/food_volume_measure_test/example
+cd /home/min/project/food3d_im_test/example
 
 conan install . -pr:b=default -pr:h=../profiles/rk3562_aarch64 \
   -of build/armv8 --build=missing -c tools.build:jobs=4
@@ -148,7 +148,7 @@ file build/armv8/example
 ## 第 5 步：部署到板子
 
 ```bash
-cd /home/min/project/food_volume_measure_test/example
+cd /home/min/project/food3d_im_test/example
 
 scp build/armv8/example build/armv8/bench root@<板子IP>:/root/
 scp ../py/test_data/base.pcd root@<板子IP>:/root/
@@ -218,11 +218,11 @@ Conan 按 `package_id` 缓存二进制。**改任何影响 ABI 的配置**（`co
 想把库强制重建一次：
 
 ```bash
-conan create . -pr:b=default -pr:h=../food_volume_measure_test/profiles/rk3562_aarch64 \
-  -s build_type=Release --build=food_volume_measure/* -c tools.build:jobs=4
+conan create . -pr:b=default -pr:h=../food3d_im_test/profiles/rk3562_aarch64 \
+  -s build_type=Release --build=food3d_im/* -c tools.build:jobs=4
 ```
 
-> 注意 `--build=food_volume_measure/*` 只重建本库，不动 PCL。
+> 注意 `--build=food3d_im/*` 只重建本库，不动 PCL。
 > 若要把 PCL 一起重建（例如改了 PCL 选项），用 `--build=missing` 或显式
 > `--build=pcl/*`。
 

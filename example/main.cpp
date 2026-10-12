@@ -1,4 +1,4 @@
-// 消费者示例：用 food_volume_measure 的公开 API 跑一次 IM 体积测量。
+// 消费者示例：用 food3d_im 的公开 API 跑一次 IM 体积测量。
 //
 // 用法:
 //   example <baseline.pcd> <food.pcd> [config.json] [--dump-middle[=DIR]]
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "警告: 配置加载失败(" << config_path << ")，使用内置默认值\n";
     }
     if (dump_middle) {
-        measurer.set_save_middle_cloud(true).set_middle_cloud_dir(middle_dir);
+        measurer.set_middle_cloud_dir(middle_dir);
     }
 
     const VolumeEstimate est = measurer.set_baseline({baseline}).set_food(food).run();

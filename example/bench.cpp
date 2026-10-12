@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     log_set_level(LogLevel::kError);
     log_set_console(false);
 
-    // 计时前一次性载入点云，只测量算法本身。
+    // 计时前一次性载入点云；run() 的计时仍包含中间点云写盘。
     const PointCloud baseline = load_pcd(baseline_path);
     const PointCloud food = load_pcd(food_path);
     if (baseline.points.empty() || food.points.empty()) {
@@ -87,8 +87,7 @@ int main(int argc, char* argv[]) {
     measurer.set_baseline({baseline}).set_food(food);
 
     //measurer.save_config_to_json("param.json");
-    measurer.set_save_middle_cloud(true);
-    measurer.set_middle_cloud_dir("middle_clouds");
+    //measurer.set_middle_cloud_dir("middle_clouds");
 
     double total_wall = 0.0;
     double total_cpu = 0.0;
@@ -111,7 +110,7 @@ int main(int argc, char* argv[]) {
     getrusage(RUSAGE_SELF, &ru);
     const double max_rss_mb = static_cast<double>(ru.ru_maxrss) / 1024.0; // Linux 下 ru_maxrss 单位为 KB
 
-    std::cout << "\n===== food_volume_measure 端到端基准 (runs=" << runs << ") =====\n";
+    std::cout << "\n===== food3d_im 端到端基准 (runs=" << runs << ") =====\n";
     std::cout << std::left << std::setw(24) << "指标" << std::right << std::setw(12) << "wall(ms)"
               << std::setw(12) << "cpu(ms)" << "\n";
     std::cout << std::string(48, '-') << "\n";
