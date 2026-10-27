@@ -2,13 +2,13 @@
 os=Linux
 arch=armv8
 compiler=gcc
-compiler.version=14
+compiler.version=12
 compiler.cppstd=gnu17
 compiler.libcxx=libstdc++11
 build_type=Release
 
 [tool_requires]
-arm-toolchain/14.3.rel1
+arm-toolchain/12.3.rel1
 
 [options]
 pcl/*:with_libusb=False
