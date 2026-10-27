@@ -1,3 +1,5 @@
+include(pcl-minimal)
+
 [settings]
 os=Linux
 arch=armv8
@@ -9,12 +11,6 @@ build_type=Release
 
 [tool_requires]
 arm-toolchain/12.3.rel1
-
-[options]
-pcl/*:with_libusb=False
-pcl/*:with_pcap=False
-pcl/*:with_qt=False
-pcl/*:with_opengl=False
 
 [conf]
 tools.build:jobs=4

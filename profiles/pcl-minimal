@@ -1,0 +1,14 @@
+# Shared PCL option set, pulled in by every host profile via `include(pcl-minimal)`.
+#
+# The measurement library only uses PCL's core, filters, segmentation and surface
+# modules, so the optional integrations are switched off. This matters twice:
+#   1. libusb (-> libudev/system) and opengl (-> opengl/system) would otherwise
+#      demand host dev packages (libudev-dev, libgl1-mesa-dev) at install time.
+#   2. qt pulls a large Qt 6 build that is never linked.
+# Keeping the options in one shared file guarantees `conan create` (library) and
+# the consumer's `conan install` resolve the exact same pcl package_id.
+[options]
+pcl/*:with_libusb=False
+pcl/*:with_pcap=False
+pcl/*:with_qt=False
+pcl/*:with_opengl=False
