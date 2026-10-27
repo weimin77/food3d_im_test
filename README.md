@@ -5,7 +5,7 @@
 编译示例，不直接编译主库的 `src/`。本仓库用于检查包能否被下游工程使用，并在点云数据
 可用时运行测量和性能基准。
 
-目前提供两套 **Linux** 构建配置：桌面 x86_64（GCC 13）和 RK3562 aarch64（GCC 14.3
+目前提供两套 **Linux** 构建配置：桌面 x86_64（GCC 13）和 RK3562 aarch64（GCC 12.3
 交叉编译）。Windows 和 macOS 没有对应的 Conan profile；`bench.cpp` 使用
 `sys/resource.h`，其中峰值内存的换算按 Linux 的单位处理。
 
@@ -29,7 +29,7 @@
   `*.pcd` 被 `.gitignore` 排除，**克隆仓库后不会自动获得点云数据**；
   `py/test_data/ground_truth.json` 仅保存数值真值，不能代替输入 PCD。
 - RK3562 构建前，按 [交叉编译指南](example/cross-compile-rk3562.md) 将
-  `arm-toolchain/14.3.rel1` 放进本地 Conan 缓存，并确认板端运行的是 aarch64 Linux。
+  `arm-toolchain/12.3.rel1` 放进本地 Conan 缓存，并确认板端运行的是 aarch64 Linux。
 
 ### 配置文件兼容性
 
@@ -78,8 +78,10 @@ cmake --build build/desktop -j4
 
 ## RK3562 aarch64：交叉编译与板端运行
 
-`profiles/rk3562_aarch64` 使用 `os=Linux`、`arch=armv8`、GCC 14 和
-`arm-toolchain/14.3.rel1`。它关闭 PCL 的 libusb、pcap、Qt、OpenGL 选项。
+`profiles/rk3562_aarch64` 使用 `os=Linux`、`arch=armv8`、GCC 12 和
+`arm-toolchain/12.3.rel1`。它通过 `include(pcl-minimal)` 关闭 PCL 的 libusb、pcap、
+Qt、OpenGL 选项；桌面 profile `gcc13_release` 也引入同一个文件，因此两边选项不会
+漂移，命令行无需再写 `-o pcl/*:...`。
 **创建库包和安装示例依赖时都使用这个 profile**，否则 Conan 可能需要另一套包。
 
 ```bash
@@ -154,7 +156,7 @@ measurer.set_middle_cloud_dir("middle_data/cpp");
 
 | 路径 | 用途 |
 |------|------|
-| `profiles/` | 桌面和 RK3562 的 Conan host profiles |
+| `profiles/` | 桌面和 RK3562 的 Conan host profiles；`pcl-minimal` 是两者共用的 PCL 选项 |
 | `example/` | C++ 消费者、性能基准及板端部署说明 |
 | `py/` | Python 绑定测试、点云导出和算法实验 |
 | `py/test_data/ground_truth.json` | 样本真值；PCD 输入文件需自行提供 |

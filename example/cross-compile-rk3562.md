@@ -7,7 +7,7 @@
 | 目标平台 | RK3562 / ARMv8-A / **64 位** / Linux |
 | Conan `arch` | `armv8` |
 | 工具链 triplet | `aarch64-none-linux-gnu` |
-| 工具链包 | `arm-toolchain/14.3.rel1`（GCC 14.3） |
+| 工具链包 | `arm-toolchain/12.3.rel1`（GCC 12.3） |
 | 交叉 profile | `../profiles/rk3562_aarch64` |
 | 构建目录 | `build/armv8` |
 
@@ -51,13 +51,13 @@ cd /home/min/project/arm-toolchain
 
 conan create . -pr:b=default \
   -s:h os=Linux -s:h arch=armv8 -s:h compiler=gcc \
-  -s:h compiler.version=14 -s:h compiler.cppstd=gnu17 \
+  -s:h compiler.version=12 -s:h compiler.cppstd=gnu17 \
   -s:h compiler.libcxx=libstdc++11 -s:h build_type=Release \
   --build-require --build=missing -c tools.build:jobs=4
 ```
 
 > ⚠️ `-s:h compiler.version` 必须与 recipe 的 `version` 对应。当前 recipe 产出
-> `14.3.rel1`，所以这里是 `14`。版本不匹配时 `validate()` 会直接报
+> `12.3.rel1`，所以这里是 `12`。版本不匹配时 `validate()` 会直接报
 > `Unsupported version`。
 
 验证已进缓存：
@@ -72,26 +72,32 @@ conan list "arm-toolchain/*:*"
 `../profiles/rk3562_aarch64` 内容如下（已就位）：
 
 ```ini
+include(pcl-minimal)
+
 [settings]
 os=Linux
 arch=armv8
 compiler=gcc
-compiler.version=14
+compiler.version=12
 compiler.cppstd=gnu17
 compiler.libcxx=libstdc++11
 build_type=Release
 
 [tool_requires]
-arm-toolchain/14.3.rel1
+arm-toolchain/12.3.rel1
 
+[conf]
+tools.build:jobs=4
+```
+
+PCL 的四个开关放在同目录的 `../profiles/pcl-minimal`，由 `include()` 引入：
+
+```ini
 [options]
 pcl/*:with_libusb=False
 pcl/*:with_pcap=False
 pcl/*:with_qt=False
 pcl/*:with_opengl=False
-
-[conf]
-tools.build:jobs=4
 ```
 
 **两个关键点：**
@@ -99,7 +105,8 @@ tools.build:jobs=4
 1. **PCL 的选项必须写进 profile，不能只在命令行上给。**
    Conan 的 `conan create`（编库）和下游 `conan install`（编 example）必须用
    **完全一致**的选项，否则算出的 package_id 不同，Conan 会另编一套二进制，
-   或用错版本导致链接失败。写进 profile 就天然一致。
+   或用错版本导致链接失败。写进 profile 就天然一致；两个 profile 共用
+   `pcl-minimal` 则保证桌面与交叉两条路径的写法不会再各自漂移。
 
 2. **为什么要关这四个选项。**
    - `with_libusb` / `with_pcap`：PCL 1.14 默认 `True`，会引入 `libusb` 与
@@ -205,7 +212,7 @@ ssh root@<板子IP>
 | 现象 | 原因与处理 |
 |---|---|
 | `Unsupported version ...` | `arm-toolchain` 版本与 `-s:h compiler.version` 不匹配，见第 1 步的警告 |
-| `libudev` 找不到 | PCL 的 `with_libusb`/`with_pcap` 没关。确认 profile 的 `[options]` 段生效 |
+| `libudev` 找不到 | PCL 的 `with_libusb`/`with_pcap` 没关。确认 profile 里的 `include(pcl-minimal)` 生效（`conan profile show -pr:h=...` 应打印 `[options]`） |
 | 链接期 VFP / 浮点 ABI 不匹配 | toolchain、库、消费方的 `compiler.*` 与 `build_type` 三者不一致，重编时保持 profile 完全相同 |
 | `file` 显示 x86-64 | `CMAKE_TOOLCHAIN_FILE` 未生效，重新跑第 4 步的 `cmake -S . -B ...` |
 | 板端 `volume_cm3` 为 `nan` | 见验证点 ①，检查是否误走 `kUnsupportedPlatform` |
@@ -231,4 +238,5 @@ conan create . -pr:b=default -pr:h=../food3d_im_test/profiles/rk3562_aarch64 \
 - `README.md` — 桌面 x86_64 与 RK3562 两套目标的总体说明
 - `../../README.md` — 测试工程总览（目录结构、Python 侧、真值表）
 - `../../profiles/rk3562_aarch64` — 交叉 profile 本体
+- `../../profiles/pcl-minimal` — 两个 profile 共用的 PCL 选项
 - `/home/min/project/arm-toolchain/README.md` — 工具链 recipe 与 triplet 对照表

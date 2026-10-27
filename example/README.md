@@ -15,11 +15,13 @@
 
 ```bash
 # 在 food3d_im 仓库根目录
-conan create . -pr:b=default -pr:h=default -s build_type=Release --build=missing
+conan create . -pr:b=default -pr:h=../food3d_im_test/profiles/gcc13_release \
+  --build=missing
 ```
 
 `example/conanfile.py` 依赖 `food3d_im/0.1.0`，**profile 必须与编库时一致**
-（桌面 gcc-13 / RK3562 gcc-14 + armv8，均 Release）。
+（桌面 gcc-13 / RK3562 gcc-12 + armv8，均 Release）。PCL 选项统一由
+`../profiles/pcl-minimal` 提供，因此用本仓库的 profile 编库时不需要额外 `-o`。
 
 ## 构建与运行（桌面 x86_64）
 
@@ -61,9 +63,10 @@ scp ../py/test_data/food/3.pcd root@<板子IP>:/root/
 ssh root@<板子IP> '/root/bench /root/base.pcd /root/3.pcd 5'
 ```
 
-> 前置条件：`arm-toolchain/14.3.rel1` 必须先在本地 Conan 缓存中建好，
+> 前置条件：`arm-toolchain/12.3.rel1` 必须先在本地 Conan 缓存中建好，
 > 且 PCL 的 `with_libusb` / `with_pcap` / `with_qt` / `with_opengl` 必须关闭
-> （已写在 `../profiles/rk3562_aarch64` 里）——细节见上述文档。
+> （已在 `../profiles/pcl-minimal` 里，由两个 profile `include()` 引入，
+> 命令行无需再传 `-o`）——细节见上述文档。
 
 ## 用法
 
