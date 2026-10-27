@@ -87,8 +87,6 @@ int main(int argc, char* argv[]) {
     measurer.set_baseline({baseline}).set_food(food);
 
     //measurer.save_config_to_json("param.json");
-    //std::cout << "配置已保存到 param.json\n";
-    //return 0;
     //measurer.set_middle_cloud_dir("middle_clouds");
 
     double total_wall = 0.0;
